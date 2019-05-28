@@ -16,6 +16,14 @@ class Connection extends EventEmitter {
       this.secret = auth.secret;
     }
 
+    this.subscription = {};
+    this.book = {};
+
+    this.bookTopics = [
+      'orderBookL2_25',
+      'orderBookL2'
+    ];
+
   }
 
   getAuthHeaders() {
@@ -69,7 +77,20 @@ class Connection extends EventEmitter {
   handleMessage(e) {
     const payload = JSON.parse(e.data);
 
-    this.emit('message', payload);
+    if(this.bookTopics.includes(payload.table)) {
+
+      const { symbol } = payload.data[0];
+
+      const id = `${payload.table}:${symbol}`;
+
+      if(this.book[id]) {
+        this.book[id].handle(payload);
+        this.emit(id, this.book[id]);
+        return;
+      }
+    }
+
+    this.emit('wsMessage', payload);
   }
 
   subscribe(topic) {
@@ -82,6 +103,21 @@ class Connection extends EventEmitter {
 
     this.subscription[topic] = true;
   }
+
+//   watchBook(symbol, topic = 'orderBookL2') {
+//     if(!this.bookTopics.includes(topic)) {
+//       throw new Error('This book topic is not supported');
+//     }
+// 
+//     const id = `${topic}:${symbol}`;
+// 
+//     if(this.book[id]) {
+//       return;
+//     }
+// 
+//     this.book[id] = new Book(id);
+//     this.rawSubscribe(id);
+//   }
 
 }
 
