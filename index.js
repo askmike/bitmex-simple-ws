@@ -90,7 +90,7 @@ class Connection extends EventEmitter {
       }
     }
 
-    this.emit('wsMessage', payload);
+    this.emit('message', payload);
   }
 
   subscribe(topic) {
