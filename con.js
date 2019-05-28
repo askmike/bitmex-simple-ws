@@ -6,16 +6,16 @@ const Book = require('./book');
 
 class Connection extends EventEmitter {
 
-  constructor({key, secret}) {
+  constructor(auth) {
 
     super();
 
     this.connected = false;
 
-    if(key && secret) {
+    if(auth && auth.key && auth.secret) {
       this.isAuth = true;
-      this.key = key;
-      this.secret = secret;
+      this.key = auth.key;
+      this.secret = auth.secret;
     }
 
     this.subscription = {};
@@ -25,6 +25,8 @@ class Connection extends EventEmitter {
       'orderBookL2_25',
       'orderBookL2'
     ];
+
+    this.on('wsMessage', m => console.log(new Date, m));
 
   }
 
