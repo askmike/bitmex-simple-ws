@@ -107,6 +107,10 @@ class Connection extends EventEmitter {
   }
 
   watchBook(symbol, topic = 'orderBookL2') {
+    if(!this.bookTopics.includes(topic)) {
+      throw new Error('This book topic is not supported');
+    }
+
     const id = `${topic}:${symbol}`;
 
     if(this.book[id]) {
