@@ -16,14 +16,7 @@ class Connection extends EventEmitter {
       this.secret = auth.secret;
     }
 
-    this.subscription = {};
-    this.book = {};
-
-    this.bookTopics = [
-      'orderBookL2_25',
-      'orderBookL2'
-    ];
-
+    this.subscriptions = [];
   }
 
   getAuthHeaders() {
@@ -66,8 +59,8 @@ class Connection extends EventEmitter {
       console.log('opened!');
     }
 
-    this.ws.onerror = e => console.error('error', e);
-    this.ws.onclose = e => console.log('onclose', e);
+    this.ws.onerror = e => this.emit('error', e);
+    this.ws.onclose = e => this.emit('close', e);
 
     this.ws.onmessage = this.handleMessage.bind(this);
 
@@ -76,48 +69,19 @@ class Connection extends EventEmitter {
 
   handleMessage(e) {
     const payload = JSON.parse(e.data);
-
-    if(this.bookTopics.includes(payload.table)) {
-
-      const { symbol } = payload.data[0];
-
-      const id = `${payload.table}:${symbol}`;
-
-      if(this.book[id]) {
-        this.book[id].handle(payload);
-        this.emit(id, this.book[id]);
-        return;
-      }
-    }
-
     this.emit('message', payload);
   }
 
   subscribe(topic) {
 
-    if(this.subscription[topic]) {
+    if(this.subscriptions.includes(topic)) {
       return;
     }
 
     this.ws.send(`{"op": "subscribe", "args": ["${topic}"]}`);
 
-    this.subscription[topic] = true;
+    this.subscriptions.push(topic);
   }
-
-//   watchBook(symbol, topic = 'orderBookL2') {
-//     if(!this.bookTopics.includes(topic)) {
-//       throw new Error('This book topic is not supported');
-//     }
-// 
-//     const id = `${topic}:${symbol}`;
-// 
-//     if(this.book[id]) {
-//       return;
-//     }
-// 
-//     this.book[id] = new Book(id);
-//     this.rawSubscribe(id);
-//   }
 
 }
 
