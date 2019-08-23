@@ -22,7 +22,6 @@
   },
   "homepage": "https://github.com/askmike/bitmex-simple-ws#readme",
   "dependencies": {
-    "lodash": "^4.17.11",
     "ws": "^7.0.0"
   }
 }
