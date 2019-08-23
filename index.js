@@ -2,6 +2,8 @@ const WebSocket = require('ws');
 const crypto = require('crypto');
 const EventEmitter = require('events');
 
+const wait = n => new Promise(r => setTimeout(r, n));
+
 class Connection extends EventEmitter {
 
   constructor(auth) {
@@ -9,6 +11,7 @@ class Connection extends EventEmitter {
     super();
 
     this.connected = false;
+    this.reopen = true;
 
     if(auth && auth.key && auth.secret) {
       this.isAuth = true;
@@ -34,7 +37,26 @@ class Connection extends EventEmitter {
     }
   }
 
+  reconnect = async () => {
+
+    if(!this.reopen) {
+      return;
+    }
+
+    this.connect();
+
+    await this.afterOpen;
+
+    await wait(200);
+
+    this.subscriptions.forEach(sub => {
+      sub.active = false;
+      this.subscribe(sub.name);
+    });
+  }
+
   disconnect() {
+    this.reopen = false;
     this.ws.disconnect();
   }
 
@@ -59,11 +81,19 @@ class Connection extends EventEmitter {
       console.log('opened!');
     }
 
-    this.ws.onerror = e => {
-      console.log(new Date, '[BITMEX] error', e);
+    const onError = e => {
+      console.log(new Date, '[BITMEX] error', e.message);
     }
-    this.ws.onclose = e => {
-      console.log(new Date, '[BITMEX] close', e);
+
+    this.ws.on('error', onError)
+    this.ws.onerror = onError;
+
+    this.ws.onclose = async e => {
+      console.log(new Date, '[BITMEX] close');
+      this.emit('close');
+      this.connected = false;
+      wait(1000);
+      this.reconnect();
     }
 
     this.ws.onmessage = this.handleMessage;

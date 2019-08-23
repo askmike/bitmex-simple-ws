@@ -4,7 +4,6 @@ Lightweight API wrapepr for the Bitmex websocket connector.
 
 ## TODO
 
-- Handle reconnects
 - Add heartbeat
 
 ## Final
