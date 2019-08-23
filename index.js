@@ -59,28 +59,44 @@ class Connection extends EventEmitter {
       console.log('opened!');
     }
 
-    this.ws.onerror = e => this.emit('error', e);
-    this.ws.onclose = e => this.emit('close', e);
+    this.ws.onerror = e => {
+      console.log(new Date, '[BITMEX] error', e);
+    }
+    this.ws.onclose = e => {
+      console.log(new Date, '[BITMEX] close', e);
+    }
 
-    this.ws.onmessage = this.handleMessage.bind(this);
+    this.ws.onmessage = this.handleMessage;
 
     return this.afterOpen;
   }
 
-  handleMessage(e) {
+  handleMessage = e => {
     const payload = JSON.parse(e.data);
     this.emit('message', payload);
   }
 
   subscribe(topic) {
 
-    if(this.subscriptions.includes(topic)) {
+    let registration;
+    this.subscriptions.forEach(sub => {
+      if(sub.name === topic) {
+        registration = sub;
+      }
+    });
+
+    if(registration && registration.active) {
+      console.log(new Date, '[BITMEX] refusing to subscribe to same topic twice', topic);
       return;
     }
 
-    this.ws.send(`{"op": "subscribe", "args": ["${topic}"]}`);
+    if(!registration) {
+      this.subscriptions.push({name: topic, active: true});
+    } else if(!registration.active) {
+      registration.active = true;
+    }
 
-    this.subscriptions.push(topic);
+    this.ws.send(`{"op": "subscribe", "args": ["${topic}"]}`);
   }
 
 }
