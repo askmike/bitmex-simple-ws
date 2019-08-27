@@ -78,10 +78,17 @@ class Connection extends EventEmitter {
     this.ws.onopen = () => {
       this.connected = true;
       readyHook();
-      console.log('opened!');
+      console.log('[BITMEX] opened!');
     }
 
     const onError = e => {
+      if(
+        e.message === 'Unexpected server response: 403' ||
+        e.message === 'Unexpected server response: 429'
+      ) {
+        throw new Error(`[BITMEX] received "${.message}" need to back off reconnecting`)
+      }
+
       console.log(new Date, '[BITMEX] error', e.message);
     }
 
@@ -92,7 +99,7 @@ class Connection extends EventEmitter {
       console.log(new Date, '[BITMEX] close');
       this.emit('close');
       this.connected = false;
-      wait(1000);
+      await wait(1000);
       this.reconnect();
     }
 
