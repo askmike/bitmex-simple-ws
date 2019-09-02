@@ -86,7 +86,7 @@ class Connection extends EventEmitter {
         e.message === 'Unexpected server response: 403' ||
         e.message === 'Unexpected server response: 429'
       ) {
-        throw new Error(`[BITMEX] received "${message}" need to back off reconnecting`)
+        throw new Error(`[BITMEX] received "${e.message}" need to back off reconnecting`)
       }
 
       console.log(new Date, '[BITMEX] error', e.message);
